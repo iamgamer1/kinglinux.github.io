@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WGU C851 – Linux Foundations Quiz</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:#f5f5f0;color:#1a1a1a;padding:2rem 1rem}
+  .wrap{max-width:700px;margin:0 auto}
+  h1{font-size:1.3rem;font-weight:600;margin-bottom:1rem;color:#333}
+
+  .prog-bg{height:6px;background:#ddd;border-radius:3px;margin-bottom:.75rem}
+  .prog{height:6px;background:#534AB7;border-radius:3px;transition:width .3s}
+
+  .tracker{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+  .meta{font-size:13px;color:#666;font-weight:500}
+  .category-badge{font-size:11px;background:#534AB7;color:#fff;border-radius:12px;padding:2px 10px;font-weight:500;letter-spacing:.3px}
+
+  .dot-nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.75rem;padding:10px 12px;background:#fff;border:1px solid #e5e5e0;border-radius:10px}
+  .dot{width:24px;height:24px;border-radius:50%;border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;color:#fff}
+  .dot.unseen{background:#d0d0d0;color:#555;cursor:default}
+  .dot.current{background:#534AB7;box-shadow:0 0 0 3px #c0bdf0}
+  .dot.correct{background:#639922}
+  .dot.wrong{background:#A32D2D}
+  .dot.skipped{background:#e0a020}
+
+  .dot-legend{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+  .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+  .leg-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+
+  .annotation{background:#fff;border:1px solid #e5e5e0;border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:#555;line-height:1.6}
+  .annotation strong{color:#534AB7;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .ann-tags{margin-top:5px;display:flex;gap:6px;flex-wrap:wrap}
+  .tag{background:#f0effe;color:#534AB7;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:500}
+
+  .qtext{font-size:15px;font-weight:600;line-height:1.6;margin-bottom:1.25rem}
+  .opt{display:block;width:100%;text-align:left;padding:11px 15px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;font-size:14px;cursor:pointer;line-height:1.5;transition:background .15s}
+  .opt:hover:not(:disabled){background:#f0f0f0}
+  .opt.ok{background:#eaf3de;border-color:#639922;color:#27500A}
+  .opt.bad{background:#FCEBEB;border-color:#A32D2D;color:#501313}
+  .opt.selected{background:#e8e8f0;border-color:#534AB7}
+  .fb{font-size:13px;margin:.75rem 0 0;font-weight:600;min-height:18px}
+  .fb.ok{color:#3B6D11}
+  .fb.bad{color:#A32D2D}
+  .explanation{font-size:13px;line-height:1.6;color:#444;background:#f9f8f5;border-left:3px solid #534AB7;padding:10px 14px;border-radius:0 6px 6px 0;margin-top:10px;display:none}
+
+  .nav-bar{display:flex;gap:8px;margin-top:1.25rem;align-items:center;flex-wrap:wrap}
+  .btn{padding:9px 18px;border:1px solid #bbb;border-radius:8px;background:#fff;color:#1a1a1a;font-size:14px;cursor:pointer;transition:background .15s}
+  .btn:hover:not(:disabled){background:#f0f0f0}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.primary{background:#534AB7;color:#fff;border-color:#534AB7}
+  .btn.primary:hover:not(:disabled){background:#443da0}
+  .btn-skip{font-size:12px;color:#888;background:none;border:none;cursor:pointer;padding:9px 6px;text-decoration:underline}
+  .btn-skip:hover{color:#534AB7}
+
+  .fill{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:8px}
+  .hint{font-size:12px;color:#888;margin-bottom:8px}
+
+  .fin{text-align:center;padding:2rem 0;display:none}
+  .fin h2{font-size:20px;font-weight:600;margin-bottom:.5rem}
+  .score-big{font-size:52px;font-weight:700;color:#534AB7}
+  .fin p{color:#666;font-size:14px;margin-top:.5rem}
+  .score-breakdown{display:flex;gap:16px;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+  .score-stat{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px 18px;font-size:13px;color:#555}
+  .score-stat span{display:block;font-size:22px;font-weight:700}
+  .score-stat span.g{color:#639922}
+  .score-stat span.r{color:#A32D2D}
+  .score-stat span.y{color:#e0a020}
+  .fin-btns{display:flex;gap:10px;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WGU C851 – Linux Foundations Quiz</h1>
+
+  <div class="prog-bg"><div class="prog" id="pb"></div></div>
+
+  <div class="tracker" id="tracker">
+    <span class="meta" id="meta"></span>
+    <span class="category-badge" id="cat-badge"></span>
+  </div>
+
+  <div class="dot-nav" id="dot-nav"></div>
+  <div class="dot-legend" id="dot-legend">
+    <span class="leg"><span class="leg-dot" style="background:#d0d0d0"></span>Not visited</span>
+    <span class="leg"><span class="leg-dot" style="background:#534AB7"></span>Current</span>
+    <span class="leg"><span class="leg-dot" style="background:#639922"></span>Correct</span>
+    <span class="leg"><span class="leg-dot" style="background:#A32D2D"></span>Wrong</span>
+    <span class="leg"><span class="leg-dot" style="background:#e0a020"></span>Skipped</span>
+  </div>
+
+  <div class="annotation" id="annotation">
+    <strong>Topic</strong>
+    <div class="ann-tags" id="ann-tags"></div>
+  </div>
+
+  <div class="qtext" id="qt"></div>
+  <div id="oa"></div>
+  <div class="fb" id="fb"></div>
+  <div class="explanation" id="exp"></div>
+
+  <div class="nav-bar">
+    <button class="btn" id="prev-btn">← Back</button>
+    <button class="btn primary" id="nb" style="display:none">Next →</button>
+    <button class="btn-skip" id="skip-btn">Skip for now</button>
+  </div>
+
+  <div class="fin" id="fin">
+    <h2>Quiz complete! 🎉</h2>
+    <div class="score-big" id="sc"></div>
+    <p id="sl"></p>
+    <div class="score-breakdown">
+      <div class="score-stat"><span class="g" id="s-correct">0</span>Correct</div>
+      <div class="score-stat"><span class="r" id="s-wrong">0</span>Wrong</div>
+      <div class="score-stat"><span class="y" id="s-skipped">0</span>Skipped</div>
+    </div>
+    <div class="fin-btns">
+      <button class="btn primary" id="review-btn">Review Wrong Answers</button>
+      <button class="btn" id="restart-btn">Restart Quiz</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const Q=[
+{q:"Which programs are web servers? (Choose two.)",o:["Apache HTTPD","Postfix","Curl","Dovecot","NGINX"],a:["Apache HTTPD","NGINX"],m:1,cat:"Services & Servers",tags:["multi-select","networking","web"],
+e:"Apache HTTPD and NGINX are the two most popular Linux web servers. Postfix is a mail transfer agent (MTA). Curl is a command-line HTTP client, not a server. Dovecot is an IMAP/POP3 mail retrieval server."},
+{q:"Differences between HDD and SSD? (Choose two.)",o:["HDDs have a motor and moving parts; SSDs do not.","HDDs can fail due to physical damage, SSDs cannot.","SSDs store many times more data than HDDs.","/dev/sda is HDD, /dev/ssda is SSD","SSDs provide faster data access than HDDs."],a:["HDDs have a motor and moving parts; SSDs do not.","SSDs provide faster data access than HDDs."],m:1,cat:"Hardware",tags:["multi-select","storage","hardware"],
+e:"HDDs use spinning magnetic platters and a mechanical read/write head — they have motors and are vulnerable to physical shock. SSDs use NAND flash with no moving parts, giving much faster read/write speeds. Both appear as /dev/sda, /dev/sdb, etc."},
+{q:"How is the IP 198.51.100.165 stored in reverse DNS?",o:["A record for 165.100.51.198.ipv4.arpa","PTR record for 165.100.51.198.in-addr.arpa","RNAME record for 198-51-100-165.rev.arpa","ARPA record for 165.100.51.198.rev","REV record for arpa.in-addr.198.51.100.165"],a:["PTR record for 165.100.51.198.in-addr.arpa"],m:0,cat:"Networking & DNS",tags:["single-select","dns","networking"],
+e:"Reverse DNS uses PTR records in the in-addr.arpa zone. The IP is reversed: 198.51.100.165 becomes 165.100.51.198.in-addr.arpa. A records map names to IPs; PTR records map IPs back to names."},
+{q:"Which bus type connects hard disk drives to the motherboard?",o:["RAM bus","NUMA bus","CPU bus","SATA bus","Auto bus"],a:["SATA bus"],m:0,cat:"Hardware",tags:["single-select","storage","hardware"],
+e:"SATA (Serial ATA) is the standard interface for connecting HDDs and SSDs to the motherboard. RAM uses the memory bus. NUMA is a memory architecture concept, not a physical bus."},
+{q:"Best free RHEL-compatible distro for a hobby project?",o:["Ubuntu Linux LTS","Raspbian","Debian GNU/Linux","CentOS","openSUSE"],a:["CentOS"],m:0,cat:"Linux Distributions",tags:["single-select","distros","rhel"],
+e:"CentOS was a free, binary-compatible rebuild of RHEL. Ubuntu and Debian use apt/dpkg vs rpm/yum. openSUSE is RPM-based but not RHEL-derived. Raspbian is for Raspberry Pi."},
+{q:"What information does 'top' display?",o:["Files ordered by size","Running processes ordered by CPU/RAM usage","User accounts ordered by logins","User groups ordered by members","User accounts ordered by files"],a:["Running processes ordered by CPU/RAM usage"],m:0,cat:"System Monitoring",tags:["single-select","processes","monitoring"],
+e:"top is a dynamic real-time process viewer showing running processes sorted by CPU/RAM usage, plus system stats like uptime, load average, memory, and swap."},
+{q:"Which command resolves a DNS name to an IP address?",o:["dnsname","dns","query","host","iplookup"],a:["host"],m:0,cat:"Networking & DNS",tags:["single-select","dns","commands"],
+e:"The host command is a simple DNS lookup utility. 'host example.com' returns the IP address. Other tools: dig (more detail) and nslookup."},
+{q:"Which output comes from the 'free' command?",o:["total used free shared buf/cached available","Permissions and file sizes","Running processes list","Login history","Disk partitions"],a:["total used free shared buf/cached available"],m:0,cat:"System Monitoring",tags:["single-select","memory","monitoring"],
+e:"free displays RAM and swap statistics: total, used, free, shared, buffer/cache, and available columns."},
+{q:"What is true about dmesg? (Choose two.)",o:["Traces command execution step by step","Sends messages to all user sessions","Displays the Linux kernel ring buffer","Outputs all new system journal messages immediately","May not show older info if overwritten by newer info"],a:["Displays the Linux kernel ring buffer","May not show older info if overwritten by newer info"],m:1,cat:"System Monitoring",tags:["multi-select","kernel","logs"],
+e:"dmesg reads the kernel's ring buffer — a fixed-size circular buffer storing hardware init messages, driver events, and kernel warnings. Older messages get overwritten by new ones. journalctl handles systemd journal output."},
+{q:"Which output could come from the 'last' command?",o:["1 ls  2 cat text.txt  3 logout","Password for user last changed at Sat Mar 31","Last login: Fri Mar 23 from server.example.com","EXT4-fs (dm-7): mounted filesystem","root tty2 Wed May 17 21:11 - 21:11 (00:00)"],a:["root tty2 Wed May 17 21:11 - 21:11 (00:00)"],m:0,cat:"System Monitoring",tags:["single-select","users","logs"],
+e:"last reads /var/log/wtmp and shows recent logins/logouts: username, terminal (tty), date, login time, and session duration."},
+{q:"What is the UID of the root user?",o:["1","-1","255","65536","0"],a:["0"],m:0,cat:"Users & Permissions",tags:["single-select","users","root"],
+e:"Root's UID is always 0 — hardcoded into the kernel. The kernel grants elevated privileges based on UID 0, not the username 'root'. Regular users typically start at UID 1000."},
+{q:"What permissions does chmod 654 file.txt set on a regular file?",o:["drw-r-xr--","d\"\"wxr-x--","\"\"wxr-x--x","\"\"rwxrw---x","-rw-r-xr--"],a:["-rw-r-xr--"],m:0,cat:"Users & Permissions",tags:["single-select","chmod","permissions"],
+e:"Octal: 6=rw-, 5=r-x, 4=r--. So 654 → owner rw-, group r-x, others r--. Leading dash = regular file: -rw-r-xr--"},
+{q:"What is true about the owner of a file?",o:["Each file is owned by exactly one user and one group.","The owner always has full permissions.","The owning user must be a member of the file's group.","When a user is deleted, all their files disappear.","File ownership cannot be changed once set."],a:["Each file is owned by exactly one user and one group."],m:0,cat:"Users & Permissions",tags:["single-select","ownership","files"],
+e:"Every Linux file has exactly one owning user and one group. The owner doesn't automatically have full permissions — these are set with chmod. Files survive user deletion (showing the old UID). Ownership changes with chown."},
+{q:"What permissions are set on the /tmp/ directory?",o:["rwxrwxrwt","------rwX","rwSrw-rw-","rwxrwS---","r-xr-X--t"],a:["rwxrwxrwt"],m:0,cat:"Users & Permissions",tags:["single-select","sticky-bit","directories"],
+e:"/tmp is world-writable. The 't' (sticky bit) means only the file's owner or root can delete/rename files, preventing users from deleting each other's temp files."},
+{q:"Which command adds user tux and creates their home directory with defaults?",o:["defaultuser tux","useradd -m tux","usercreate tux","useradd -o default tux","passwd -a tux"],a:["useradd -m tux"],m:0,cat:"Users & Permissions",tags:["single-select","useradd","commands"],
+e:"useradd creates a new user. The -m flag creates the home directory (e.g. /home/tux) populated from /etc/skel. Without -m, no home directory is created. passwd changes passwords, not creates users."},
+{q:"What information is stored in /etc/passwd? (Choose three.)",o:["User's storage space limit","Numerical user ID","Username","Encrypted password","User's default shell"],a:["Numerical user ID","Username","User's default shell"],m:1,cat:"Users & Permissions",tags:["multi-select","etc-passwd","users"],
+e:"/etc/passwd has 7 colon-separated fields: username, password placeholder (x), UID, GID, comment, home directory, shell. Encrypted passwords are in /etc/shadow (root-only readable)."},
+{q:"Which tar options handle compression? (Choose two.)",o:["-bz","-z","-g","-j","-z2"],a:["-z","-j"],m:1,cat:"File Management",tags:["multi-select","tar","compression"],
+e:"tar itself just archives without compression. -z pipes through gzip (.tar.gz), -j pipes through bzip2 (.tar.bz2). -J uses xz. -g is for incremental backups."},
+{q:"FILL IN THE BLANK: What keyword begins a loop in a shell script?",o:null,a:"for",f:1,cat:"Shell Scripting",tags:["fill-in","scripting","loops"],
+e:"The 'for' keyword starts a for loop: for variable in list; do ... done. While uses 'while', and there's 'until'. The for loop is most common for iterating over files or lists."},
+{q:"Which command creates work.tar from the ./work/ directory?",o:["tar --new work.tar ./work/","tar -cf work.tar ./work/","tar --create work.tgz --content ./work/","tar work.tar < ./work/","tar work > work.tar"],a:["tar -cf work.tar ./work/"],m:0,cat:"File Management",tags:["single-select","tar","archiving"],
+e:"tar -cf: -c (create) and -f (filename). 'tar -cf work.tar ./work/' creates work.tar from ./work/. Adding -z also compresses with gzip (-czf)."},
+{q:"Which key exits 'less'?",o:["l","x","e","q","!"],a:["q"],m:0,cat:"Text & Files",tags:["single-select","less","pager"],
+e:"In less (and man pages), 'q' quits. Space/f = forward page, b = back, / = search. Memorize this — you'll use less constantly when reading man pages."},
+{q:"How can test.sh (-rwxr-xr-x) be executed? (Choose two.)",o:["run test.sh","${test.sh}","cmd ./test.sh","./test.sh","bash test.sh"],a:["./test.sh","bash test.sh"],m:1,cat:"Shell Scripting",tags:["multi-select","scripting","execution"],
+e:"./test.sh uses the shebang line. ./ is needed because the current directory isn't in PATH for security. 'bash test.sh' explicitly invokes bash, bypassing the execute permission requirement."},
+{q:"Which command sorts the output of export-logs?",o:["export-logs < sort","export-logs | sort","export-logs & sort","export-logs > sort","export-logs <> sort"],a:["export-logs | sort"],m:0,cat:"Shell Scripting",tags:["single-select","pipes","redirection"],
+e:"| (pipe) passes stdout of one command as stdin to the next. > redirects to a file. < reads from a file. & runs in the background. <> opens a file for reading and writing."},
+{q:"Output of 'for file in *.txt; do echo $file; done' with files a.txt, b.txt, c.cav?",o:["*.txt","a b","c.cav","a.txt","a.txt b.txt"],a:["a.txt b.txt"],m:0,cat:"Shell Scripting",tags:["single-select","globs","scripting"],
+e:"*.txt expands to a.txt and b.txt. c.cav doesn't match *.txt and is skipped. The loop prints each filename — output is 'a.txt' then 'b.txt'."},
+{q:"Which command searches for foo.txt under the /home directory?",o:["search /home -file foo.txt","search /home foo.txt","find /home -file foo.txt","find /home -name foo.txt","find /home foo.txt"],a:["find /home -name foo.txt"],m:0,cat:"File Management",tags:["single-select","find","commands"],
+e:"find searches the filesystem. Syntax: find [path] [options]. -name filters by filename. 'find /home -name foo.txt' searches recursively. The -file flag doesn't exist in find."},
+{q:"test.sh has -rw-r--r-- permissions and ./test.sh gives 'Permission denied'. Fix?",o:["Change extension from .sh to .bin","Set the execute bit in the file's permissions","Add user to the exec group","Set the SetUID bit","Run using #!./test.sh instead"],a:["Set the execute bit in the file's permissions"],m:0,cat:"Users & Permissions",tags:["single-select","chmod","scripting"],
+e:"-rw-r--r-- means no execute bit anywhere. To run directly with ./test.sh, you need it set. Use: chmod +x test.sh. File extension doesn't affect OS execution permissions."},
+{q:"What is a Linux distribution?",o:["The Linux file system from root after mounting all filesystems","A bundling of Linux kernel, utilities, and other software","Rules governing Linux kernel source distribution","An OS based on Linux but incompatible with the kernel","Changes enabling Linux on another processor architecture"],a:["A bundling of Linux kernel, utilities, and other software"],m:0,cat:"Linux Distributions",tags:["single-select","distros","kernel"],
+e:"Linux is just the kernel. A distribution bundles the kernel with a package manager, init system, desktop environment, utilities, and more into a complete OS. Examples: Ubuntu, Debian, Fedora, CentOS, Arch."},
+{q:"Which package manager is used in Red Hat-based Linux systems?",o:["portage","rpm","apt-get","dpkg","packagectl"],a:["rpm"],m:0,cat:"Package Management",tags:["single-select","rpm","package-manager"],
+e:"RPM (Red Hat Package Manager) is used by Red Hat, CentOS, Fedora, and SUSE. Higher-level tools yum and dnf sit on top of rpm. Debian-based distros use dpkg and apt/apt-get. Portage is Gentoo's system."},
+{q:"Which program is a graphical vector graphics editor?",o:["Python","NGINX","Samba","Inkscape","MySQL"],a:["Inkscape"],m:0,cat:"Linux Applications",tags:["single-select","software","gui"],
+e:"Inkscape is a free, open-source vector graphics editor comparable to Adobe Illustrator — works with SVG files. GIMP is the raster counterpart. NGINX=web server, Samba=file sharing, MySQL=database."},
+{q:"Where is the Raspberry Pi OS stored?",o:["IDE bus master device","Read-only firmware partition","Removable SD card","Linux extension module on GPIO pins","Built-in rewritable flash storage"],a:["Removable SD card"],m:0,cat:"Hardware",tags:["single-select","raspberry-pi","hardware"],
+e:"The Raspberry Pi has no built-in persistent storage. The OS is stored on a microSD card inserted into the board. Setup involves flashing an OS image to the SD card first. Newer Pi models support NVMe but SD card is the default."},
+{q:"What does a Free Software license define?",o:["Required technical documentation per contributor","Programming languages allowed for extension","Libraries required to compile the software","Limits on purposes for use","Conditions for modifying and distributing the software"],a:["Conditions for modifying and distributing the software"],m:0,cat:"Linux Philosophy",tags:["single-select","free-software","licensing"],
+e:"Free Software (FSF) grants four freedoms: run, study, modify, distribute. The license defines conditions for modifying and redistributing. GPL, LGPL, and MIT are common examples. They don't restrict languages or documentation."},
+{q:"Why are web browser cookies considered dangerous?",o:["They support identification and tracking of users.","They are always public and accessible to anyone.","They consume significant storage space.","They store critical data lost when deleted.","They can contain and execute viruses."],a:["They support identification and tracking of users."],m:0,cat:"Security & Privacy",tags:["single-select","cookies","privacy"],
+e:"Cookies maintain state (like keeping you logged in). The privacy concern: third-party tracking cookies follow users across websites, building profiles for targeted advertising. Cookies can't execute code or contain viruses."},
+{q:"Typical public cloud services? (Choose three.)",o:["Platform as a Service (PaaS)","Infrastructure as a Service (IaaS)","Internet as a Service","Graphics as a Service","Software as a Service (SaaS)"],a:["Platform as a Service (PaaS)","Infrastructure as a Service (IaaS)","Software as a Service (SaaS)"],m:1,cat:"Cloud Computing",tags:["multi-select","cloud","iaas-paas-saas"],
+e:"The three standard cloud models: IaaS (VMs, networking, storage — e.g. AWS EC2), PaaS (managed app platform — e.g. Heroku), SaaS (hosted applications — e.g. Gmail). 'Internet as a Service' and 'Graphics as a Service' are not real categories."},
+{q:"Which shell prompt character indicates root privileges?",o:["!","#","*","&","$"],a:["#"],m:0,cat:"Shell & Terminal",tags:["single-select","root","shell"],
+e:"Bash prompt ends with $ for regular users and # for root (set in PS1). The # is a visual warning — commands run as root can permanently damage the system."},
+{q:"Commands to get help information on 'ls'? (Choose two.)",o:["option ls","usage ls","manual ls","man ls","info ls"],a:["man ls","info ls"],m:1,cat:"Shell & Terminal",tags:["multi-select","man","help"],
+e:"man ls opens the manual page. info ls opens GNU info documentation (often more detailed and hyperlinked). Most commands also support --help or -h for a quick summary."},
+{q:"What is true about a recursive directory listing?",o:["It includes the content of sub-directories.","It includes directory permissions.","It includes inode details.","It includes ownership information.","It includes file content previews."],a:["It includes the content of sub-directories."],m:0,cat:"File Management",tags:["single-select","ls","directories"],
+e:"ls -R descends into all subdirectories and lists their contents. It doesn't automatically show permissions, inodes, or ownership (those need -l, -i flags). It never shows file content."},
+{q:"Commands to remove an empty Downloads directory? (Choose two.)",o:["undir Downloads","rmdir Downloads","dir -r Downloads","rem Downloads","rm -r Downloads"],a:["rmdir Downloads","rm -r Downloads"],m:1,cat:"File Management",tags:["multi-select","rm","rmdir"],
+e:"rmdir removes empty directories (fails if not empty). rm -r removes a directory and all its contents recursively. Use rm -r with caution — no recycle bin. undir, dir -r, rem are not valid Linux commands."},
+{q:"Which directory has documentation for installed packages?",o:["/usr/share/doc/","/etc/defaults/","/var/info/","/doc/","/usr/examples/"],a:["/usr/share/doc/"],m:0,cat:"Filesystem",tags:["single-select","fhs","documentation"],
+e:"/usr/share/doc/ contains per-package directories with READMEs, changelogs, example configs, and license files. E.g. /usr/share/doc/nginx/. This is part of the Filesystem Hierarchy Standard (FHS)."},
+{q:"Which command adds /new/dir/ to the PATH variable?",o:["$PATH=/new/dir:$PATH","PATH=/new/dir:PATH","export PATH=/new/dir:PATH","export $PATH=/new/dir:$PATH","export PATH=/new/dir:$PATH"],a:["export PATH=/new/dir:$PATH"],m:0,cat:"Shell Scripting",tags:["single-select","PATH","environment"],
+e:"PATH is a colon-separated list of directories. To prepend /new/dir/: PATH=/new/dir:$PATH (the $PATH expands the existing value). export makes it available to child processes. Never use $PATH on the left side."},
+{q:"From /home/user/Downloads/, running 'ls ../Documents/' shows which directory?",o:["/home/user/Documents/","/home/user/Documents/Downloads/","/home/user/Downloads/Documents/","/Documents/","/home/Documents"],a:["/home/user/Documents/"],m:0,cat:"Filesystem",tags:["single-select","paths","navigation"],
+e:".. means the parent directory. From /home/user/Downloads/, the parent is /home/user/. So ../Documents/ resolves to /home/user/Documents/. Relative paths always start from your current working directory."},
+{q:"Directory has texts1.txt, texts2.txt, texts3.csv. Copy .txt files to /tmp/:",o:["cp ??.txt /tmp/","cp *.txt /tmp/","cp. \\.txt /tmp/","cp ?.txt /tmp/","cp $?.txt /tmp/"],a:["cp *.txt /tmp/"],m:0,cat:"File Management",tags:["single-select","globs","cp"],
+e:"* matches zero or more characters, so *.txt matches texts1.txt and texts2.txt. ? matches exactly one character — ??.txt would only match two-char names before .txt. texts3.csv doesn't end in .txt."},
+{q:"FILL IN THE BLANK: Single character to split a shell command across multiple lines?",o:null,a:"\\",f:1,cat:"Shell Scripting",tags:["fill-in","scripting","syntax"],
+e:"A backslash (\\) at end of line is a line continuation in Bash — it escapes the newline, so the shell treats the next line as a continuation. Useful for making long commands more readable."},
+{q:"DNS record types that hold an IP address? (Choose two.)",o:["NS","AAAA","MX","A","CNAME"],a:["AAAA","A"],m:1,cat:"Networking & DNS",tags:["multi-select","dns","records"],
+e:"A records store IPv4 addresses. AAAA records store IPv6 addresses. NS records point to nameservers. MX records point to mail servers (by hostname). CNAME records are hostname aliases."},
+{q:"Which value could be a Linux process ID?",o:["/bin/bash","60b503cd-019e-4300-a7be","/sys/pid/9a14","fff3","21398"],a:["21398"],m:0,cat:"System Monitoring",tags:["single-select","processes","pid"],
+e:"PIDs are positive integers assigned sequentially by the kernel. Max PID is typically 32768 (or 4194304 on 64-bit). UUIDs, hex strings, and paths are not PIDs. See PIDs with ps, top, or pgrep."},
+{q:"Protocol used for automatic IP address configuration?",o:["NFS","LDAP","SMTP","DNS","DHCP"],a:["DHCP"],m:0,cat:"Networking & DNS",tags:["single-select","dhcp","networking"],
+e:"DHCP automatically assigns IP addresses, subnet masks, gateways, and DNS server addresses. NFS=file sharing, LDAP=directory services, SMTP=email, DNS=hostname resolution (not assignment)."},
+{q:"Which device file represents a hard disk partition?",o:["/dev/ttyS0","/dev/sata0","/dev/part0","/dev/sda2","/dev/sda2"],a:["/dev/sda2"],m:0,cat:"Hardware",tags:["single-select","device-files","storage"],
+e:"Storage devices appear as /dev/sda, /dev/sdb, etc. Partitions are numbered: /dev/sda1 = first partition, /dev/sda2 = second. /dev/ttyS0 is a serial port. /dev/sata0 and /dev/part0 are not standard names."},
+{q:"Which statement about Linux hardware drivers is correct?",o:["Drivers are programs run by the user wanting to use a device.","BIOS handles all hardware; Linux doesn't use drivers.","Drivers stored on devices, copied by kernel when attached.","Drivers downloaded from vendor repo when device attached.","Drivers are compiled into the kernel or loaded as kernel modules."],a:["Drivers are compiled into the kernel or loaded as kernel modules."],m:0,cat:"Hardware",tags:["single-select","drivers","kernel-modules"],
+e:"Linux drivers are either compiled statically into the kernel or built as loadable .ko files loaded on demand (via udev when a device is plugged in). They run in kernel space. Use lsmod to see loaded modules."},
+{q:"What is found in the /proc/ directory?",o:["One directory per installed program","One device file per hardware device","One file per user account","One directory per running process","One log file per running service"],a:["One directory per running process"],m:0,cat:"Filesystem",tags:["single-select","proc","virtual-fs"],
+e:"/proc is a virtual filesystem created by the kernel at runtime. Each running process gets a numbered subdirectory (e.g. /proc/1234/) with info about that process. Also has system-wide info like /proc/cpuinfo and /proc/meminfo."},
+{q:"Linux distros providing long-term security updates? (Choose two.)",o:["Ubuntu Linux LTS","Fedora Linux","Debian GNU/Linux Unstable","Ubuntu Linux non-LTS","Red Hat Enterprise Linux"],a:["Ubuntu Linux LTS","Red Hat Enterprise Linux"],m:1,cat:"Linux Distributions",tags:["multi-select","distros","lts"],
+e:"Ubuntu LTS gets 5 years of security updates. RHEL offers 10-year support with paid subscriptions. Fedora is supported ~13 months. Debian Unstable (Sid) has no fixed window. Non-LTS Ubuntu gets 9 months."},
+{q:"Which directory needs read/write access if on its own dedicated filesystem?",o:["/opt","/lib","/etc","/var","/usr"],a:["/var"],m:0,cat:"Filesystem",tags:["single-select","fhs","var"],
+e:"/var contains variable data that constantly changes at runtime: logs, mail spools, package databases, caches, PID files. It must be writable. /usr, /lib, /opt can be mounted read-only. /etc rarely changes."},
+{q:"Which command changes ownership of doku.odt to user tux?",o:["chmod u=tux doku.odt","newuser doku.odt tux","chown tux doku.odt","transfer tux: doku.odt","passwd doku.odt:tux"],a:["chown tux doku.odt"],m:0,cat:"Users & Permissions",tags:["single-select","chown","ownership"],
+e:"chown changes user and/or group ownership. 'chown tux doku.odt' sets owner to tux. To also change the group: 'chown tux:groupname doku.odt'. chmod changes permissions, not ownership."},
+{q:"What happens to a file outside /home when its owner account is deleted? (Choose two.)",o:["Moved to /lost+found during fsck","File is removed from filesystem","Former owner's UID is shown in file details","root becomes new owner","Ownership and permissions remain unchanged"],a:["Former owner's UID is shown in file details","Ownership and permissions remain unchanged"],m:1,cat:"Users & Permissions",tags:["multi-select","users","ownership"],
+e:"Deleting a user account does NOT delete their files. Files remain on disk. Since the username no longer maps to a UID, ls -l shows the raw numeric UID. Permissions stay unchanged. /lost+found is for filesystem corruption recovery."},
+{q:"Correct statements about /etc/skel? (Choose two.)",o:["Stores root's personal settings","Files copied to new user's home at system startup","Files copied to new user's home when account is created","Contains default config files for the useradd command","Contains global system settings"],a:["Files copied to new user's home when account is created","Contains default config files for the useradd command"],m:1,cat:"Users & Permissions",tags:["multi-select","skel","useradd"],
+e:"/etc/skel (skeleton) holds template files copied to a new user's home when their account is created with useradd -m. Typically contains .bashrc, .profile, and .bash_logout. Not copied at boot."},
+{q:"What is true about links in a Linux file system?",o:["Symlinks can only point to files, not directories.","Hard links can only point to directories.","When a symlink target moves, the link auto-updates.","A symlink can point to a file on another filesystem.","Only root can create hard links."],a:["A symlink can point to a file on another filesystem."],m:0,cat:"Filesystem",tags:["single-select","symlinks","hard-links"],
+e:"Symlinks store a path string and can point to files or directories on any filesystem — even a different partition. Hard links point to the same inode and must be on the same filesystem. Symlinks don't auto-update when the target moves — they become dangling links."},
+{q:"Source files for uid/gid/groups info from the 'id' command? (Choose two.)",o:["/etc/id","/etc/passwd","/etc/group","/home/index","/var/db/users"],a:["/etc/passwd","/etc/group"],m:1,cat:"Users & Permissions",tags:["multi-select","id","groups"],
+e:"'id' displays UID, primary GID, and group memberships. It reads UID and primary GID from /etc/passwd, and group names/memberships from /etc/group. Encrypted passwords are in /etc/shadow."},
+{q:"What can the passwd command accomplish? (Choose two.)",o:["Change a user's username","Change a user's password","Create a new user account","Create a new user group","Lock a user account"],a:["Change a user's password","Lock a user account"],m:1,cat:"Users & Permissions",tags:["multi-select","passwd","accounts"],
+e:"passwd changes passwords ('passwd tux') and locks/unlocks accounts ('passwd -l tux' locks, 'passwd -u tux' unlocks). Locking prepends ! to the hash in /etc/shadow. To rename a user: usermod -l; to create: useradd."},
+{q:"What is true about the 'su' command?",o:["It is the default shell of root.","Only root can use it.","It runs a shell or command as another user.","It changes the admin account name.","It locks root during specific time frames."],a:["It runs a shell or command as another user."],m:0,cat:"Users & Permissions",tags:["single-select","su","privilege"],
+e:"su (substitute user) starts a shell as another user. 'su tux' switches to tux (requires tux's password). 'su -' switches to root with a full login environment. Any user can run su if they know the target's password."},
+{q:"FILL IN THE BLANK: What ls parameter prints a recursive listing?",o:null,a:"-R",f:1,cat:"File Management",tags:["fill-in","ls","recursive"],
+e:"ls -R (capital R) lists directory contents recursively, descending into subdirectories. Combine with -l for detailed info: ls -lR. find is generally more powerful for recursive searches."},
+{q:"How is usage information typically displayed for Linux commands?",o:["Using option /? or /??","Using option ?! or ?=!","Using option /doc or /documentation","Using option -h or --help","Using option -m or --manpage"],a:["Using option -h or --help"],m:0,cat:"Shell & Terminal",tags:["single-select","help","commands"],
+e:"Almost all Linux tools support -h or --help for a brief usage summary. Windows uses /? instead — a common gotcha when switching between systems. For full documentation, use man or info."},
+{q:"Which command shows the absolute path to the current working directory?",o:["who","cd ..","pwd","ls -l","cd ~/home"],a:["pwd"],m:0,cat:"Shell & Terminal",tags:["single-select","pwd","navigation"],
+e:"pwd (print working directory) outputs the absolute path of your current location, e.g. /home/user/projects. $PWD holds the same value. who=logged-in users, cd=change directory, ls -l=list files."},
+{q:"Commands to output content of 'Texts 2.txt'? (Choose two.)",o:["cat 'Texts 2.txt'","cat -- Texts 2.txt","cat |Texts 2.txt|","cat 'Texts\\ 2.txt'","cat Texts\\ 2.txt"],a:["cat 'Texts 2.txt'","cat Texts\\ 2.txt"],m:1,cat:"Text & Files",tags:["multi-select","cat","quoting"],
+e:"Filenames with spaces need special handling. Single quotes preserve literal values: cat 'Texts 2.txt' works. A backslash escapes the space: cat Texts\\ 2.txt works. The pipe | in a filename is invalid shell syntax."},
+{q:"Which command displays filenames only, no additional information?",o:["ls -a","ls -lh","ls -l","ls -alh","ls -nl"],a:["ls -a"],m:0,cat:"File Management",tags:["single-select","ls","flags"],
+e:"ls -a shows all files including hidden dotfiles, but without -l it outputs just filenames. ls -l adds long listing format (permissions, sizes, dates). ls -lh adds human-readable sizes."},
+{q:"What is the purpose of the PATH environment variable?",o:["Allows running commands without knowing the executable's location","Prevents commands from running in certain locations","Specifies user's home directory location","Indicates the default shell location","Contains absolute path to current directory"],a:["Allows running commands without knowing the executable's location"],m:0,cat:"Shell Scripting",tags:["single-select","PATH","environment"],
+e:"When you type a command, the shell searches each directory in PATH (colon-separated) until it finds the executable. Without PATH, you'd need to type the full path (e.g. /usr/bin/ls). HOME=home directory, PWD=current directory."},
+{q:"Which command sets variable USERNAME to the value bob?",o:["set USERNAME bob","$USERNAME==bob","var USERNAME=bob","USERNAME<=bob","USERNAME=bob"],a:["USERNAME=bob"],m:0,cat:"Shell Scripting",tags:["single-select","variables","bash"],
+e:"Bash variable assignment: VARNAME=value. No spaces around =, no dollar sign on the left, no keywords. To make it available to child processes: export USERNAME=bob. To read it: $USERNAME."},
+{q:"FILL IN THE BLANK: What command displays manual pages?",o:null,a:"man",f:1,cat:"Shell & Terminal",tags:["fill-in","man","help"],
+e:"man (manual) is the traditional Unix/Linux documentation system. 'man ls' opens the manual page for ls. Pages are organized into sections (1=user commands, 5=file formats, 8=sysadmin). Use man man to learn more. Press q to quit."},
+{q:"Copy /etc/ including all sub-directories to /root/:",o:["copy /etc /root","cp -r /etc/* /root","cp -v /etc/* /root","rcp /etc/* /root","cp -R /etc/*.* /root"],a:["cp -r /etc/* /root"],m:0,cat:"File Management",tags:["single-select","cp","recursive"],
+e:"cp -r (recursive) copies directories and contents. 'cp -r /etc/* /root' copies contents of /etc/ into /root/. Note: /etc/*.* would miss files without a dot in the name. -v adds verbose output but not recursion."},
+{q:"Which command puts lines of data.csv into alphabetical order?",o:["a..z data.csv","sort data.csv","abc data.csv","wc -s data.csv","grep --sort data.csv"],a:["sort data.csv"],m:0,cat:"Text & Files",tags:["single-select","sort","text-processing"],
+e:"sort reads lines and outputs them sorted (default: alphabetical ascending). Flags: -r (reverse), -n (numeric), -k (by column), -u (unique lines). wc counts words/lines/chars. grep searches patterns."},
+{q:"Which example shows the correct for loop structure in a shell script?",o:["for *.txt as file => echo $file","for *.txt ( echo $i )","for file in *.txt do echo $i done","for ls *.txt exec {} \\;","foreach @{file} { echo $i }"],a:["for file in *.txt do echo $i done"],m:0,cat:"Shell Scripting",tags:["single-select","loops","bash-syntax"],
+e:"Bash for loop: for VARIABLE in LIST; do COMMANDS; done. Variable before 'in', list after 'in', body between do and done. Note: variable in body should be $file not $i — but this is the only syntactically valid option."},
+{q:"Regex operator matching the preceding character zero or one time?",o:["?","*","+","%","$"],a:["*"],m:0,cat:"Shell Scripting",tags:["single-select","regex","patterns"],
+e:"In basic regex (BRE) used by some tools, the answer is *. In extended regex (ERE): ? = zero or one, * = zero or more, + = one or more. Shell globs use * differently. Know your context — this is BRE-specific."},
+{q:"How should MYVAR be set so a child script can see it?",o:["!MYVAR=value","env MYVAR=value","MYVAR=value","$MYVAR=value","export MYVAR=value"],a:["export MYVAR=value"],m:0,cat:"Shell Scripting",tags:["single-select","export","environment"],
+e:"Variables set without export are local to the current shell. 'export MYVAR=value' marks it for export to the environment — visible to any child scripts or programs launched. 'env MYVAR=value ./script.sh' works as a one-off."},
+{q:"Return value of a shell script after successful execution?",o:["1","0","-1","-255","255"],a:["0"],m:0,cat:"Shell Scripting",tags:["single-select","exit-code","scripting"],
+e:"Exit code 0 means success by Unix convention. Non-zero = error. $? holds the exit code of the last command. Scripts return 0 by default if they reach the end without 'exit N'. If statements check this: 'if command; then' succeeds when command returns 0."},
+{q:"Create poems.zip containing all .txt files in current directory:",o:["zip *.txt > poems.zip","zcat *.txt poems.zip","zip poems.zip *.txt","zip cfz poems.zip *.txt","cat *.txt | zip poems.zip"],a:["zip poems.zip *.txt"],m:0,cat:"File Management",tags:["single-select","zip","compression"],
+e:"zip syntax: zip [archive_name] [files]. 'zip poems.zip *.txt' creates poems.zip with all .txt files. Unlike tar, no -f flag needed — filename is the first argument. zcat decompresses gzip files."},
+{q:"True statements about a typical shell script? (Choose two.)",o:["It has the executable permission bit set.","It starts with the two-character sequence #!.","Located in /usr/local/scripts/.","Located in /etc/bash/scripts/.","Compiled into a binary for the machine architecture."],a:["It has the executable permission bit set.","It starts with the two-character sequence #!."],m:1,cat:"Shell Scripting",tags:["multi-select","shebang","scripting"],
+e:"Shell scripts are plain text files. The shebang (#!) on line 1 followed by the interpreter path tells the kernel which interpreter to use. The execute bit (chmod +x) must be set to run as ./script.sh. Scripts can live anywhere and are not compiled."},
+{q:"Extract contents of the compressed archive file1.tar.gz:",o:["tar -czf file1.tar.gz","ztar file1.tar.gz","tar -xzf file1.tar.gz","tar --extract file1.tar.gz","detar file1.tar.gz"],a:["tar -xzf file1.tar.gz"],m:0,cat:"File Management",tags:["single-select","tar","extract"],
+e:"tar flags: -x (extract), -z (gzip decompress), -f (filename). -xzf = extract a gzip-compressed archive. Contrast with creating: -czf. For bzip2 (.tar.bz2) use -xjf. 'tar xf file1.tar.gz' also works (auto-detects compression)."},
+{q:"Find all lines containing 'linux' (any case) in operating-systems.txt:",o:["igrep linux operating-systems.txt","less -i linux operating-systems.txt","grep -i linux operating-systems.txt","cut linux operating-systems.txt","cut [Ll][Ii][Nn][Uu][Xx] operating-systems.txt"],a:["grep -i linux operating-systems.txt"],m:0,cat:"Text & Files",tags:["single-select","grep","text-search"],
+e:"grep searches for patterns. -i makes search case-insensitive, matching 'linux', 'Linux', 'LINUX', etc. 'igrep' doesn't exist. 'less -i' enables case-insensitive search inside less but doesn't search a file directly."},
+{q:"Which statement about Linux passwords is true?",o:["All passwords can be decrypted with the admin's master password.","Passwords may never start with a non-letter.","Users cannot change their password once set.","Passwords are only stored in hashed form.","Passwords may be at most six characters long."],a:["Passwords are only stored in hashed form."],m:0,cat:"Security & Privacy",tags:["single-select","passwords","shadow"],
+e:"Linux stores passwords as one-way cryptographic hashes (typically SHA-512) in /etc/shadow. Hashing is not encryption — no master key to reverse it. Authentication hashes the entered password and compares to the stored hash."},
+{q:"Which Linux distribution is derived from Red Hat Enterprise Linux?",o:["Raspbian","openSUSE","Debian","Ubuntu","CentOS"],a:["CentOS"],m:0,cat:"Linux Distributions",tags:["single-select","centos","rhel"],
+e:"CentOS was built by recompiling RHEL source with Red Hat branding removed — binary-compatible with RHEL. In 2020 Red Hat shifted CentOS to CentOS Stream. AlmaLinux and Rocky Linux are now the main free RHEL rebuilds."},
+{q:"Which statement is true about Free Software?",o:["Developed by volunteers only.","May be modified by anyone using it.","Must always be available free of charge.","Only runs on Linux.","Only distributed as compiled binary."],a:["May be modified by anyone using it."],m:0,cat:"Linux Philosophy",tags:["single-select","free-software","open-source"],
+e:"FSF Free Software is about freedom, not price. The four freedoms include studying and modifying the source code. Free Software can be sold (e.g. Red Hat), can run on any OS, and can be developed by companies or volunteers."},
+{q:"How is a Linux instance provisioned in an IaaS cloud?",o:["Run standard Linux installer via remote console.","Distribution vendor delivers it to cloud instance.","Prepare in local VM then copy to cloud.","Cloud provider supplies pre-prepared distro images.","Upload a provider-specific config file to the cloud provider."],a:["Cloud provider supplies pre-prepared distro images."],m:0,cat:"Cloud Computing",tags:["single-select","iaas","cloud-images"],
+e:"IaaS providers (AWS, Azure, GCP) maintain libraries of pre-built machine images (AMIs on AWS) for popular Linux distros. You select an image, choose instance size, and the cloud spins up a VM in seconds — no installer needed."},
+{q:"Differences between private and regular browser window? (Choose three.)",o:["Private windows don't allow printing or saving websites.","Private windows don't store cookies persistently.","Private windows don't support website logins.","Private windows don't keep browser history records.","Private windows don't send stored cookies."],a:["Private windows don't store cookies persistently.","Private windows don't keep browser history records.","Private windows don't send stored cookies."],m:1,cat:"Security & Privacy",tags:["multi-select","privacy","browser"],
+e:"Private/Incognito mode: no saved history, no persistent cookies after session, starts without sending existing cookies. You can still log in — sessions just aren't saved. Private mode does NOT make you anonymous — ISP and websites still see your traffic."},
+{q:"Preferred source for installing applications on Linux?",o:["Vendor's version management system","CD-ROM disk","Distribution's package repository","Vendor's website","A retail store"],a:["Distribution's package repository"],m:0,cat:"Package Management",tags:["single-select","apt","package-repos"],
+e:"Package repositories (apt repos, yum/dnf repos) are curated and tested for compatibility. Installing via apt/dnf/pacman automatically resolves dependencies, handles updates, and verifies integrity with cryptographic signatures."},
+{q:"Information stored in /etc/passwd? (Choose three.)",o:["User's storage space limit","Numerical user ID","Username","Encrypted password","User's default shell"],a:["Numerical user ID","Username","User's default shell"],m:1,cat:"Users & Permissions",tags:["multi-select","etc-passwd","users"],
+e:"/etc/passwd has 7 colon-separated fields: username:x:UID:GID:comment:home_dir:shell. The 'x' means the actual hash is in /etc/shadow. Disk quotas are a separate feature. This file is world-readable, which is why passwords were moved to shadow."}
+];
+
+let qs=[], ci=0, score=0, sel=[];
+let qstate=[];
+
+function shuf(a){return a.slice().sort(()=>Math.random()-.5);}
+
+function init(){
+  qs=shuf(Q);
+  ci=0; score=0; sel=[];
+  qstate=qs.map(()=>({answered:false,correct:false,skipped:false,selectedOptions:[]}));
+  document.getElementById('fin').style.display='none';
+  document.getElementById('dot-nav').style.display='flex';
+  document.getElementById('annotation').style.display='block';
+  document.querySelector('.prog-bg').style.display='block';
+  document.getElementById('tracker').style.display='flex';
+  document.getElementById('dot-legend').style.display='flex';
+  buildDots();
+  render();
+}
+
+function buildDots(){
+  const nav=document.getElementById('dot-nav');
+  nav.innerHTML='';
+  qs.forEach((_,i)=>{
+    const d=document.createElement('button');
+    d.className='dot unseen';
+    d.textContent=i+1;
+    d.title='Q'+(i+1);
+    d.id='dot-'+i;
+    d.onclick=()=>{ if(qstate[i].answered||qstate[i].skipped||i===ci) goTo(i); };
+    nav.appendChild(d);
+  });
+  updateDots();
+}
+
+function updateDots(){
+  qs.forEach((_,i)=>{
+    const d=document.getElementById('dot-'+i);
+    if(!d) return;
+    d.className='dot';
+    if(i===ci) d.classList.add('current');
+    else if(qstate[i].skipped) d.classList.add('skipped');
+    else if(qstate[i].answered&&qstate[i].correct) d.classList.add('correct');
+    else if(qstate[i].answered&&!qstate[i].correct) d.classList.add('wrong');
+    else d.classList.add('unseen');
+  });
+}
+
+function render(){
+  sel=[];
+  const q=qs[ci];
+  const st=qstate[ci];
+
+  const done=qstate.filter(s=>s.answered||s.skipped).length;
+  document.getElementById('pb').style.width=(done/qs.length*100)+'%';
+  document.getElementById('meta').textContent='Question '+(ci+1)+' of '+qs.length+(st.skipped?' (skipped)':st.answered?' (answered)':'');
+  document.getElementById('cat-badge').textContent=q.cat||'General';
+
+  const tagsEl=document.getElementById('ann-tags');
+  tagsEl.innerHTML='';
+  (q.tags||[]).forEach(t=>{
+    const s=document.createElement('span');s.className='tag';s.textContent=t;tagsEl.appendChild(s);
+  });
+
+  document.getElementById('qt').textContent=q.q;
+  document.getElementById('fb').textContent='';
+  document.getElementById('fb').className='fb';
+  document.getElementById('exp').style.display='none';
+  document.getElementById('exp').textContent='';
+  document.getElementById('nb').style.display='none';
+  document.getElementById('skip-btn').style.display=st.answered?'none':'inline';
+  document.getElementById('prev-btn').disabled=(ci===0);
+
+  const area=document.getElementById('oa');
+  area.innerHTML='';
+
+  if(q.f){
+    const inp=document.createElement('input');
+    inp.type='text'; inp.className='fill'; inp.placeholder='Type your answer...';
+    if(st.answered){inp.value=st.selectedOptions[0]||''; inp.disabled=true;}
+    const sub=document.createElement('button'); sub.className='btn primary'; sub.textContent='Submit';
+    if(st.answered) sub.disabled=true;
+    else {
+      sub.onclick=()=>checkF(inp.value.trim(),q.a,q.e);
+      inp.onkeydown=e=>{if(e.key==='Enter')checkF(inp.value.trim(),q.a,q.e);};
+    }
+    area.appendChild(inp); area.appendChild(sub);
+    if(st.answered) restoreFeedback(q);
+    updateDots(); return;
+  }
+
+  if(q.m){
+    const h=document.createElement('p'); h.className='hint';
+    h.textContent='Select all correct answers, then click Submit.';
+    area.appendChild(h);
+  }
+
+  q.o.forEach(opt=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=opt;
+    if(st.answered){
+      b.disabled=true;
+      if(q.a.includes(opt)) b.classList.add('ok');
+      else if(st.selectedOptions.includes(opt)&&!q.a.includes(opt)) b.classList.add('bad');
+    } else {
+      if(q.m) b.onclick=()=>toggleM(b,opt);
+      else b.onclick=()=>checkS(opt,q.a[0],q.e);
+    }
+    area.appendChild(b);
+  });
+
+  if(q.m&&!st.answered){
+    const sub=document.createElement('button');
+    sub.className='btn primary'; sub.style.marginTop='4px'; sub.textContent='Submit';
+    sub.onclick=()=>checkM(q.a,q.e);
+    area.appendChild(sub);
+  }
+
+  if(st.answered) restoreFeedback(q);
+  updateDots();
+}
+
+function restoreFeedback(q){
+  const st=qstate[ci];
+  const fb=document.getElementById('fb');
+  if(st.correct){fb.textContent='✓ Correct!'; fb.className='fb ok';}
+  else{fb.textContent='✗ Incorrect. Answer: '+q.a.join(' + '); fb.className='fb bad';}
+  document.getElementById('exp').textContent=q.e;
+  document.getElementById('exp').style.display='block';
+  document.getElementById('nb').style.display='inline-block';
+  document.getElementById('skip-btn').style.display='none';
+}
+
+function toggleM(btn,opt){
+  const i=sel.indexOf(opt);
+  if(i>-1){sel.splice(i,1); btn.classList.remove('selected'); btn.style.background=''; btn.style.borderColor='';}
+  else{sel.push(opt); btn.classList.add('selected'); btn.style.background='#e8e8f0'; btn.style.borderColor='#534AB7';}
+}
+
+function checkS(chosen,correct,exp){
+  const st=qstate[ci]; st.answered=true; st.selectedOptions=[chosen]; st.skipped=false;
+  const isOk=(chosen===correct); st.correct=isOk; if(isOk) score++;
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===correct) b.classList.add('ok');
+    else if(b.textContent===chosen&&!isOk) b.classList.add('bad');
+  });
+  const fb=document.getElementById('fb');
+  if(isOk){fb.textContent='✓ Correct!'; fb.className='fb ok';}
+  else{fb.textContent='✗ Incorrect. Answer: '+correct; fb.className='fb bad';}
+  document.getElementById('exp').textContent=exp; document.getElementById('exp').style.display='block';
+  document.getElementById('nb').style.display='inline-block'; document.getElementById('skip-btn').style.display='none';
+  updateDots();
+}
+
+function checkM(correct,exp){
+  const st=qstate[ci]; st.answered=true; st.selectedOptions=[...sel]; st.skipped=false;
+  const ok=correct.every(a=>sel.includes(a))&&sel.every(s=>correct.includes(s));
+  st.correct=ok; if(ok) score++;
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled=true; b.style.background=''; b.style.borderColor='';
+    if(correct.includes(b.textContent)) b.classList.add('ok');
+    else if(sel.includes(b.textContent)&&!correct.includes(b.textContent)) b.classList.add('bad');
+  });
+  const submitBtn=document.querySelector('#oa .btn.primary'); if(submitBtn) submitBtn.disabled=true;
+  const fb=document.getElementById('fb');
+  if(ok){fb.textContent='✓ Correct!'; fb.className='fb ok';}
+  else{fb.textContent='✗ Incorrect. Correct: '+correct.join(' + '); fb.className='fb bad';}
+  document.getElementById('exp').textContent=exp; document.getElementById('exp').style.display='block';
+  document.getElementById('nb').style.display='inline-block'; document.getElementById('skip-btn').style.display='none';
+  updateDots();
+}
+
+function checkF(val,correct,exp){
+  const st=qstate[ci]; st.answered=true; st.selectedOptions=[val]; st.skipped=false;
+  const isOk=val.toLowerCase()===correct.toLowerCase(); st.correct=isOk; if(isOk) score++;
+  const sub=document.querySelector('#oa .btn.primary'); if(sub) sub.disabled=true;
+  const inp=document.querySelector('.fill'); if(inp) inp.disabled=true;
+  const fb=document.getElementById('fb');
+  if(isOk){fb.textContent='✓ Correct!'; fb.className='fb ok';}
+  else{fb.textContent='✗ Incorrect. Answer: '+correct; fb.className='fb bad';}
+  document.getElementById('exp').textContent=exp; document.getElementById('exp').style.display='block';
+  document.getElementById('nb').style.display='inline-block'; document.getElementById('skip-btn').style.display='none';
+  updateDots();
+}
+
+function skipQ(){
+  qstate[ci].skipped=true; qstate[ci].answered=false;
+  updateDots(); goNext();
+}
+
+function goNext(){
+  // Go to next unanswered question after current index
+  for(let i=ci+1;i<qs.length;i++){
+    if(!qstate[i].answered){ci=i; render(); return;}
+  }
+  // All after ci answered — go to first skipped
+  for(let i=0;i<qs.length;i++){
+    if(qstate[i].skipped){ci=i; render(); return;}
+  }
+  // All answered
+  if(qstate.every(s=>s.answered)) showFin();
+}
+
+function goTo(i){ ci=i; render(); }
+
+document.getElementById('prev-btn').onclick=()=>{ if(ci>0){ci--; render();} };
+document.getElementById('nb').onclick=goNext;
+document.getElementById('skip-btn').onclick=skipQ;
+document.getElementById('restart-btn').onclick=init;
+document.getElementById('review-btn').onclick=()=>{
+  const first=qstate.findIndex(s=>s.answered&&!s.correct);
+  if(first===-1){alert('No wrong answers to review!'); return;}
+  document.getElementById('fin').style.display='none';
+  document.getElementById('dot-nav').style.display='flex';
+  document.getElementById('annotation').style.display='block';
+  document.querySelector('.prog-bg').style.display='block';
+  document.getElementById('tracker').style.display='flex';
+  document.getElementById('dot-legend').style.display='flex';
+  ci=first; buildDots(); render();
+};
+
+function showFin(){
+  document.getElementById('oa').innerHTML='';
+  document.getElementById('qt').textContent='';
+  document.getElementById('fb').textContent='';
+  document.getElementById('exp').style.display='none';
+  document.getElementById('nb').style.display='none';
+  document.getElementById('skip-btn').style.display='none';
+  document.getElementById('prev-btn').disabled=true;
+  document.getElementById('pb').style.width='100%';
+  document.getElementById('annotation').style.display='none';
+  document.getElementById('dot-nav').style.display='none';
+  document.getElementById('dot-legend').style.display='none';
+  document.getElementById('tracker').style.display='none';
+
+  const correct=qstate.filter(s=>s.answered&&s.correct).length;
+  const wrong=qstate.filter(s=>s.answered&&!s.correct).length;
+  const skipped=qstate.filter(s=>s.skipped).length;
+  const pct=Math.round(correct/qs.length*100);
+
+  document.getElementById('sc').textContent=correct+'/'+qs.length;
+  document.getElementById('sl').textContent=pct+'% — '+(pct>=70?'Passing score! Great work! 🎉':'Keep studying — you\'ve got this!');
+  document.getElementById('s-correct').textContent=correct;
+  document.getElementById('s-wrong').textContent=wrong;
+  document.getElementById('s-skipped').textContent=skipped;
+  document.getElementById('fin').style.display='block';
+}
+
+init();
+</script>
+</body>
+</html>
